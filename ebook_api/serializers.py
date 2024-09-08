@@ -57,6 +57,11 @@ class BooksDetailSerializers(serializers.ModelSerializer):
         read_only=True,
         slug_field='genres_name'
     )
+    publisher_books = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field='publishers_name'
+    )
     rate = RatingSerializers(many=True, read_only=True, source='book_rate')
 
     class Meta:

@@ -7,15 +7,21 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.core.exceptions import ValidationError
 from django.db import models
+import os
+from django.core.files.storage import default_storage
 
 
-def author_directory_path(instance, filename):
-    author_name = instance.author_books.authors_full_name
-    return f'books/{author_name}/{filename}'
+def book_path_local(instance, filename):
+    # Путь, куда будет сохранен файл
+    path = f'books/{instance.book_slug}/{filename}'
 
-
-def book_cover_upload_to(instance, filename):
-    return f'covers/{instance.title_books}/{filename}'
+    # Проверяем, существует ли файл
+    if default_storage.exists(path):
+        # Если файл существует, возвращаем существующий путь
+        return path
+    else:
+        # Если файла нет, возвращаем новый путь
+        return path
 
 
 class Authors(models.Model):
@@ -47,9 +53,9 @@ class Books(models.Model):
     publisher_books = models.ForeignKey(
         'Publishers', models.DO_NOTHING, blank=True, null=True, related_name='publisher_books')
     link_to_file = models.FileField(
-        upload_to=author_directory_path, blank=True, null=True, max_length=900)
+        upload_to=book_path_local, blank=True, null=True, max_length=900)
     cover_image_path = models.FileField(
-        upload_to=book_cover_upload_to, blank=True, null=True, max_length=900)
+        upload_to=book_path_local, blank=True, null=True, max_length=900)
     available = models.BooleanField(blank=True, null=True)
     book_slug = models.SlugField()
 
