@@ -23,12 +23,18 @@ from django.conf.urls.static import static
 
 
 router = routers.SimpleRouter()
-router.register(r'bookslist', BooksViewSet)
+router.register(r'books', BooksViewSet)
+# router.register(r'genres', GenreViewSet)
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/', include(router.urls))
+    path('api/v1/', include(router.urls)),
+    path('api/v1/genres/', GenresView.as_view(), name='genres_books_list'),
+    path('api/v1/genres/<slug:genres_slug>/',
+         GenreDetailView.as_view(), name='genre_detail'),
+    path('api/v1/genres/<slug:genres_slug>/books/',
+         BooksByGenreDetailView.as_view(), name='books_by_genre_detail'),
 ]
 
 if settings.DEBUG:

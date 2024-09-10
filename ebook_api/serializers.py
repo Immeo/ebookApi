@@ -36,9 +36,6 @@ class BooksSerializers(serializers.ModelSerializer):
             'cover_image_path'
         )
 
-    def get_author_books(self, obj):
-        return obj.author_books.authors_full_name
-
 
 class RatingSerializers(serializers.ModelSerializer):
     class Meta:
@@ -52,11 +49,7 @@ class BooksDetailSerializers(serializers.ModelSerializer):
         read_only=True,
         slug_field='authors_full_name'
     )
-    genre_books = serializers.SlugRelatedField(
-        many=False,
-        read_only=True,
-        slug_field='genres_name'
-    )
+    genre_books = GenresSerializers(read_only=True)
     publisher_books = serializers.SlugRelatedField(
         many=False,
         read_only=True,
