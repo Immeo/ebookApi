@@ -23,20 +23,6 @@ class GenresSerializers(serializers.ModelSerializer):
         )
 
 
-class BooksSerializers(serializers.ModelSerializer):
-    author_books = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Books
-        fields = (
-            'title_books',
-            'author_books',
-            'genre_books',
-            'rating',
-            'cover_image_path'
-        )
-
-
 class RatingSerializers(serializers.ModelSerializer):
     class Meta:
         model = Rating
@@ -44,11 +30,7 @@ class RatingSerializers(serializers.ModelSerializer):
 
 
 class BooksDetailSerializers(serializers.ModelSerializer):
-    author_books = serializers.SlugRelatedField(
-        many=False,
-        read_only=True,
-        slug_field='authors_full_name'
-    )
+    author_books = AuthorsSerializers(read_only=True)
     genre_books = GenresSerializers(read_only=True)
     publisher_books = serializers.SlugRelatedField(
         many=False,

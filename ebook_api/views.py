@@ -6,11 +6,23 @@ from .models import *
 # Create your views here.
 
 
-class BooksApiList(generics.ListAPIView):
-    queryset = Books.objects.all()
-    authors = Authors.objects.all()
-    genres = Genres.objects.all()
+class AuthorsViewList(generics.ListAPIView):
+    queryset = Authors.objects.all()
+    serializer_class = AuthorsSerializers
+
+
+class AuthorDetailView(generics.RetrieveAPIView):
+    queryset = Authors.objects.all()
+    serializer_class = AuthorsSerializers
+    lookup_field = 'authors_slug'
+
+
+class BooksByAuthorDetailView(generics.ListAPIView):
     serializer_class = BooksDetailSerializers
+
+    def get_queryset(self):
+        author_slug = self.kwargs['authors_slug']
+        return Books.objects.filter(author_books__authors_slug=author_slug)
 
 
 class BooksViewSet(viewsets.ModelViewSet):
