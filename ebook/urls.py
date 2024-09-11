@@ -40,6 +40,11 @@ urlpatterns = [
          GenreDetailView.as_view(), name='genre_detail'),
     path('api/v1/genres/<slug:genres_slug>/books/',
          BooksByGenreDetailView.as_view(), name='books_by_genre_detail'),
+    path('api/v1/publishers/', PublishersViewList.as_view(), name='publishers_list'),
+    path('api/v1/publishers/<slug:publishers_slug>/',
+         PublisherDetailView.as_view(), name='publisher_detail'),
+    path('api/v1/publishers/<slug:publishers_slug>/books/',
+         BooksByPublisherDetailView.as_view(), name='books_by_publisher_detail'),
 ]
 
 if settings.DEBUG:

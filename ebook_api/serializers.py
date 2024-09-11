@@ -29,13 +29,18 @@ class RatingSerializers(serializers.ModelSerializer):
         fields = ['rating']
 
 
+class PublishersSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Publishers
+        fields = ['publishers_name', 'publishers_slug', 'publishers_id']
+
+
 class BooksDetailSerializers(serializers.ModelSerializer):
     author_books = AuthorsSerializers(read_only=True)
     genre_books = GenresSerializers(read_only=True)
-    publisher_books = serializers.SlugRelatedField(
+    publisher_books = PublishersSerializers(
         many=False,
         read_only=True,
-        slug_field='publishers_name'
     )
     rate = RatingSerializers(many=True, read_only=True, source='book_rate')
 

@@ -25,6 +25,25 @@ class BooksByAuthorDetailView(generics.ListAPIView):
         return Books.objects.filter(author_books__authors_slug=author_slug)
 
 
+class PublishersViewList(generics.ListAPIView):
+    queryset = Publishers.objects.all()
+    serializer_class = PublishersSerializers
+
+
+class PublisherDetailView(generics.RetrieveAPIView):
+    queryset = Publishers.objects.all()
+    serializer_class = PublishersSerializers
+    lookup_field = 'publishers_slug'
+
+
+class BooksByPublisherDetailView(generics.ListAPIView):
+    serializer_class = BooksDetailSerializers
+
+    def get_queryset(self):
+        publisher_slug = self.kwargs['publishers_slug']
+        return Books.objects.filter(publisher_books__publishers_slug=publisher_slug)
+
+
 class BooksViewSet(viewsets.ModelViewSet):
     queryset = Books.objects.all()
     serializer_class = BooksDetailSerializers
