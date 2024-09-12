@@ -1,3 +1,6 @@
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework import generics, viewsets
 from rest_framework.permissions import IsAuthenticated
 from .serializers import *
@@ -47,6 +50,16 @@ class BooksByPublisherDetailView(generics.ListAPIView):
 class BooksViewSet(viewsets.ModelViewSet):
     queryset = Books.objects.all()
     serializer_class = BooksDetailSerializers
+    lookup_field = 'book_slug'
+
+    @action(detail=False, methods=['get'], url_path='<slug:book_slug>')
+    def get_by_slug(self, request, book_slug):
+        try:
+            book = Books.objects.get(book_slug=book_slug)
+            serializer = self.get_serializer(book)
+            return Response(serializer.data)
+        except Books.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class GenresView(generics.ListAPIView):
