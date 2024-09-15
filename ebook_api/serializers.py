@@ -24,9 +24,12 @@ class GenresSerializers(serializers.ModelSerializer):
 
 
 class RatingSerializers(serializers.ModelSerializer):
+    rating = serializers.DecimalField(
+        max_digits=2, decimal_places=1, coerce_to_string=False)
+
     class Meta:
         model = Rating
-        fields = ['rating']
+        fields = ['rating_id', 'what_book', 'rating']
 
 
 class PublishersSerializers(serializers.ModelSerializer):
