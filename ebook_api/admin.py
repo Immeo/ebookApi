@@ -37,4 +37,4 @@ admin.site.register(Books, BooksAdmin)
 
 admin.site.register(Rating)
 
-admin.site.register(CostumUsers)
+admin.site.register(CustomUser)

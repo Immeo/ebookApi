@@ -6,6 +6,7 @@
 #   * Remove `managed = False` lines if you wish to allow Django to createTruemodify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 import os
 from django.core.files.storage import default_storage
@@ -75,12 +76,53 @@ class Books(models.Model):
         db_table = 'books'
 
 
-class CostumUsers(models.Model):
+class CustomUserManager(BaseUserManager):
+    def create_user(self, costum_users_name, costum_users_email, password=None):
+        if not costum_users_name:
+            raise ValueError('Users must have a name')
+        if not costum_users_email:
+            raise ValueError('Users must have an email')
+
+        if costum_users_email:
+            costum_users_email = self.normalize_email(costum_users_email)
+
+        user = self.model(
+            costum_users_name=costum_users_name,
+            costum_users_email=self.normalize_email(costum_users_email),
+            confirmation_code=None,  # Добавлено поле confirmation_code
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, costum_users_name, costum_users_email, password):
+        user = self.create_user(
+            costum_users_name,
+            costum_users_email,
+            password,
+        )
+        user.is_superuser = True
+        user.is_staff = True
+        user.save(using=self._db)
+        return user
+
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
     costum_users_id = models.AutoField(primary_key=True)
     costum_users_name = models.CharField(unique=True, max_length=800)
-    costum_users_email = models.CharField(unique=True, max_length=800)
-    costum_users_password = models.CharField(max_length=800)
-    costum_users_password2 = models.CharField(max_length=800)
+    costum_users_email = models.EmailField(unique=True, max_length=800)
+    costum_users_balance = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True)
+    # Пользователь не активен по умолчанию
+    is_active = models.BooleanField(default=False)
+    # Добавлено поле confirmation_code
+    confirmation_code = models.CharField(max_length=6, null=True, blank=True)
+    is_staff = models.BooleanField(default=False)
+
+    USERNAME_FIELD = 'costum_users_name'
+    REQUIRED_FIELDS = ['costum_users_email']
+
+    objects = CustomUserManager()
 
     class Meta:
         managed = True
@@ -94,6 +136,8 @@ class Rating(models.Model):
     rating_id = models.AutoField(primary_key=True)
     what_book = models.ForeignKey(
         Books, on_delete=models.CASCADE, blank=True, null=True, related_name='book_rate')
+    who_user = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, blank=True, null=True, related_name='user_rate')
     rating = models.DecimalField(max_digits=2, decimal_places=1, default=1)
 
     class Meta:
@@ -124,8 +168,9 @@ class Genres(models.Model):
 class Orders(models.Model):
     orders_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
-        CostumUsers, models.DO_NOTHING, blank=True, null=True)
-    book = models.ForeignKey(Books, models.DO_NOTHING, blank=True, null=True)
+        CustomUser, models.DO_NOTHING, blank=True, null=True, related_name='user_orders')
+    book = models.ManyToManyField(
+        Books, blank=True, related_name='book_orders')
     order_date = models.DateField()
     return_date = models.DateField(blank=True, null=True)
 

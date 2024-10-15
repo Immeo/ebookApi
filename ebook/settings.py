@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
+from datetime import timedelta
 from .middleware import FrameOptionsMiddleware
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+-v&zw2(k_yygh8a^lh42ho%c!*em24(k#)eq(w)k8e_a@vl+d'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -42,6 +44,10 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'corsheaders',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'drf_yasg',
+    'djoser',
 
     'ebook_api'
 ]
@@ -56,6 +62,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    # Другие хешеры
 ]
 
 ROOT_URLCONF = 'ebook.urls'
@@ -77,6 +90,43 @@ CORS_ALLOW_METHODS = (
     "POST",
     "PUT",
 )
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # ),
+        # 'DEFAULT_PERMISSION_CLASSES': (
+        #     'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'costum_users_id',
+    'BLACKLIST_AFTER_ROTATION': True,
+    'TOKEN_BLACKLIST': True,
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=4),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=5),
+}
+
+
+DJOSER = {
+    # Отключаем отправку ссылки на активацию. вместо ссылки будет приходит на почту письтмо  кодом активации
+    'SEND_ACTIVATION_EMAIL': False,
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
+    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
+    'SERIALIZERS': {
+        # Кастомный сериализатор
+        'user_create': 'ebook_api.serializers.CustomUserCreateSerializer',
+        'user': 'djoser.serializers.UserSerializer',
+        'current_user': 'djoser.serializers.UserSerializer',
+        'user_delete': 'djoser.serializers.UserSerializer',
+    },
+}
+
+AUTH_USER_MODEL = 'ebook_api.CustomUser'
 
 TEMPLATES = [
     {
@@ -103,9 +153,9 @@ WSGI_APPLICATION = 'ebook.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ebookDb',
-        'USER': 'postgres',
-        'PASSWORD': '245',
+        'NAME': config('NAME_DB'),
+        'USER': config('USER_DB'),
+        'PASSWORD': config('PASSWORD_DB'),
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -158,4 +208,27 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
+# для теста отправки писем
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.mail.ru'
+
+EMAIL_PORT = 465
+
+EMAIL_HOST_USER = config('EMAIL_LOGIN')
+
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
+
+# EMAIL_ADMIN и SERVER_EMAIL обязательные поля для отправки писем
+
+SERVER_EMAIL = EMAIL_HOST_USER
+
+EMAIL_ADMIN = EMAIL_HOST_USER
+
+EMAIL_USE_TLS = False
+
+EMAIL_USE_SSL = True

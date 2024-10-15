@@ -1,5 +1,9 @@
+from rest_framework import views, status
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.response import Response
 from rest_framework import generics, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -79,3 +83,56 @@ class BooksByGenreDetailView(generics.ListAPIView):
     def get_queryset(self):
         genre_slug = self.kwargs['genres_slug']
         return Books.objects.filter(genre_books__genres_slug=genre_slug)
+
+
+class CustomUserCreateView(views.APIView):
+    serializer_class = CustomUserCreateSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({'message': 'Пользователь создан'}, status=status.HTTP_201_CREATED)
+
+
+class LogoutView(views.APIView):
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.data.get('refresh_token')
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response({'message': 'Successfully logged out'}, status=200)
+
+
+class ConfirmCodeView(views.APIView):
+    serializer_class = ConfirmCodeSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        email = request.data.get('email')  # Добавьте поле email в сериализатор
+        user = CustomUser.objects.get(costum_users_email=email)
+        if user.confirmation_code != serializer.validated_data['confirmation_code']:
+            raise serializers.ValidationError('Неправильный код подтверждения')
+        user.is_active = True
+        user.save()
+        return Response({'message': 'Аккаунт успешно активирован'}, status=status.HTTP_200_OK)
+
+
+class UserInfoView(views.APIView):
+    permission_classes = [IsAuthenticated]  # Требует аутентификации
+
+    def get(self, request):
+        user = request.user  # Получаем текущего аутентифицированного пользователя
+
+        # Возвращаем полезную информацию о пользователе согласно вашей модели
+        user_info = {
+            'costum_users_name': user.costum_users_name,
+            'costum_users_email': user.costum_users_email,
+            'costum_users_balance': user.costum_users_balance,
+            'is_active': user.is_active,
+        }
+
+        return Response(user_info)
