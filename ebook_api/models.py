@@ -8,6 +8,7 @@
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from PIL import Image
 import os
 from django.core.files.storage import default_storage
 
@@ -69,7 +70,17 @@ class Books(models.Model):
         if ratings:
             return sum(ratings) / len(ratings)
         else:
-            return 0
+            return 1
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)  # Сначала сохраните экземпляр, чтобы был доступен файл
+
+        # Измените размер изображения, если оно было загружено
+        if self.cover_image_path:
+            img = Image.open(self.cover_image_path.path)
+            # Изменяем размер до 600x600
+            img = img.resize((600, 600), Image.LANCZOS)
+            img.save(self.cover_image_path.path)
 
     class Meta:
         managed = True
